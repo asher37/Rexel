@@ -1,0 +1,211 @@
+#!/usr/bin/env lua
+
+-- Lexer (Tokenize the code)
+local Lexer = {}
+Lexer.__index = Lexer
+
+function Lexer.new(source_code)
+    local self = setmetatable({}, Lexer)
+    self.source_code = source_code
+    self.tokens = {}
+    self.current_pos = 1
+    self.token_specification = {
+        {"NUMBER", "%d+%.?%d*"},
+        {"PRINT", "print"},
+        {"SET", "set"},
+        {"ID", "%a+"},
+        {"STRING", '"[^"]*"'},  -- Matches strings within double quotes
+        {"OP", "[+%-%*/]"},
+        {"EQ", "=="},
+        {"GT", ">"},
+        {"LT", "<"},
+        {"LPAREN", "%("},
+        {"RPAREN", "%)"},
+        {"NEWLINE", "\n"},
+        {"SKIP", "[ \t]+"},  -- Skip spaces and tabs
+        {"MISMATCH", "."},    -- Any other character
+    }
+    return self
+end
+
+function Lexer:tokenize()
+    while self.current_pos <= #self.source_code do
+        local matched = false
+        for _, spec in ipairs(self.token_specification) do
+            local type_, pattern = spec[1], spec[2]
+            local start_pos = self.current_pos
+            local match = string.match(self.source_code, "^" .. pattern, self.current_pos)
+            if match then
+                if type_ ~= "SKIP" then
+                    table.insert(self.tokens, {type_, match})
+                end
+                self.current_pos = self.current_pos + #match
+                matched = true
+                break
+            end
+        end
+        if not matched then
+            error("Unexpected character at position " .. self.current_pos)
+        end
+    end
+    return self.tokens
+end
+
+-- Parser (Generates Bytecode)
+local Parser = {}
+Parser.__index = Parser
+
+function Parser.new(tokens)
+    local self = setmetatable({}, Parser)
+    self.tokens = tokens
+    self.current_pos = 1
+    return self
+end
+
+function Parser:parse()
+    local bytecode = {}
+    while self.current_pos <= #self.tokens do
+        local token = self.tokens[self.current_pos]
+        if token[1] == "PRINT" then
+            table.insert(bytecode, {"PRINT"})
+            self:consume("PRINT")
+            table.insert(bytecode, self:parse_expression())
+        elseif token[1] == "SET" then
+            self:consume("SET")
+            local var_name = self:consume("ID")
+            self:consume("OP")
+            local expr = self:parse_expression()
+            table.insert(bytecode, {"SET", var_name, expr})
+        elseif token[1] == "ID" and self.tokens[self.current_pos + 1][1] == "LPAREN" then
+            local func_name = token[2]
+            self:consume("ID")
+            self:consume("LPAREN")
+            local params = {}
+            if self.tokens[self.current_pos][1] ~= "RPAREN" then
+                table.insert(params, self:parse_expression())
+                while self.tokens[self.current_pos][1] == "OP" do
+                    self:consume("OP")
+                    table.insert(params, self:parse_expression())
+                end
+            end
+            self:consume("RPAREN")
+            table.insert(bytecode, {"CALL", func_name, params})
+        else
+            error("Syntax error: Unexpected token " .. token[2])
+        end
+    end
+    return bytecode
+end
+
+function Parser:parse_expression()
+    local token = self.tokens[self.current_pos]
+    if token[1] == "NUMBER" then
+        self:consume("NUMBER")
+        return {type = "number", value = tonumber(token[2])}
+    elseif token[1] == "STRING" then
+        self:consume("STRING")
+        return {type = "string", value = token[2]:sub(2, -2)}  -- Remove quotes
+    elseif token[1] == "ID" then
+        self:consume("ID")
+        return {type = "variable", name = token[2]}
+    elseif token[1] == "LPAREN" then
+        self:consume("LPAREN")
+        local expr = self:parse_expression()
+        self:consume("RPAREN")
+        return expr
+    else
+        error("Syntax error: Expected expression")
+    end
+end
+
+function Parser:consume(expected)
+    local token = self.tokens[self.current_pos]
+    if token and token[1] == expected then
+        self.current_pos = self.current_pos + 1
+        return token[2]
+    else
+        error("Expected " .. expected .. " but found " .. (token and token[1] or "end of input"))
+    end
+end
+
+-- Interpreter (Executes Bytecode)
+local Interpreter = {}
+Interpreter.__index = Interpreter
+
+function Interpreter.new()
+    local self = setmetatable({}, Interpreter)
+    self.variables = {}
+    self.functions = {}  -- Ensure that the functions table is initialized here
+    -- Register default functions here
+    self.functions["input"] = function(self, prompt)
+        io.write(prompt)
+        return io.read()
+    end
+    return self
+end
+
+function Interpreter:interpret(bytecode)
+    for _, instruction in ipairs(bytecode) do
+        if instruction[1] == "PRINT" then
+            local value = self:eval_expression(instruction[2])
+            print(value)
+        elseif instruction[1] == "SET" then
+            local var_name = instruction[2]
+            local expr = instruction[3]
+            self.variables[var_name] = self:eval_expression(expr)
+        elseif instruction[1] == "CALL" then
+            self:call_function(instruction[2], instruction[3])
+        else
+            error("Unknown instruction: " .. instruction[1])
+        end
+    end
+end
+
+function Interpreter:eval_expression(expr)
+    if expr.type == "number" then
+        return expr.value
+    elseif expr.type == "string" then
+        return expr.value
+    elseif expr.type == "variable" then
+        return self.variables[expr.name]
+    else
+        error("Unknown expression type")
+    end
+end
+
+function Interpreter:call_function(func_name, params)
+    local func = self.functions[func_name]
+    if not func then
+        error("Undefined function " .. func_name)
+    end
+    local results = func(self, unpack(params))
+    return results
+end
+
+-- Run Rexel Code
+function run_rexel_code(source_code)
+    -- Tokenize the input
+    local lexer = Lexer.new(source_code)
+    local tokens = lexer:tokenize()
+
+    -- Parse the tokens and generate bytecode
+    local parser = Parser.new(tokens)
+    local bytecode = parser:parse()
+
+    -- Interpret (Execute) the bytecode
+    local interpreter = Interpreter.new()
+    interpreter:interpret(bytecode)
+end
+
+-- CLI: Handling Command Line Arguments
+local args = {...}
+if #args < 1 then
+    error("Usage: lua rexel.lua <code>")
+end
+
+local source_code = table.concat(args, " ", 1)
+
+-- Run the Rexel Code
+run_rexel_code(source_code)
+
+
