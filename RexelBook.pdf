@@ -1,0 +1,164 @@
+# **Mastering Rexel: From Beginner to Pro**
+
+## **1. Introduction**
+
+Welcome to "Mastering Rexel," a complete guide that will take you from a beginner to an expert in the Rexel programming language. Whether you're new to programming or experienced in other languages, this guide will walk you through every concept in-depth, explaining not just how things work but why they work. Throughout the book, you'll find **questions** to test your understanding. Answers can be found at the end of the book.
+
+## **2. Getting Started**
+
+### **2.1 Installing Rexel**
+
+To use Rexel, you need to download the latest version from the [GitHub repository](https://github.com/asher37/Rexel). Once installed, you can run a script by typing:
+
+```
+rexel my_script.rx
+```
+
+### **2.2 Writing Your First Program: Hello, World!**
+
+A "Hello, World!" program is the simplest program you can write. Here's what it looks like in Rexel:
+
+```
+print "Hello, World!"
+```
+
+#### **Breaking it down:**
+- `print` is a built-in function that outputs text to the screen.
+- The text inside the `" "` (double quotes) is called a **string**, which is a sequence of characters.
+- Every statement in Rexel is written on its own line (no need for semicolons like in C or JavaScript).
+
+### **Questions:**
+1. What does the `print` function do?
+2. What is the purpose of double quotes in the print statement?
+
+## **3. Variables and Data Types**
+
+### **3.1 What is a Variable?**
+
+A variable is a way to store data in a program. It acts as a container for values that may change over time. In Rexel, variables are dynamically typed, meaning you don't need to declare their type explicitly.
+
+### **3.2 Creating Variables**
+
+```
+name = "Asher"
+age = 21
+height = 5.9
+```
+
+#### **Explanation:**
+- `name` stores a **string** value (`"Asher"`).
+- `age` stores an **integer** (whole number).
+- `height` stores a **floating-point number** (decimal value).
+
+### **Questions:**
+1. What is the difference between an integer and a floating-point number?
+2. Can a variable change its type in Rexel? Why or why not?
+
+## **7. Real-World Projects**
+
+### **7.1 Project: A Simple Calculator**
+
+Before looking at the code, try to think about how you would build a basic calculator that supports addition, subtraction, multiplication, and division. What inputs would it need? How should it handle invalid input?
+
+#### **Step-by-Step Breakdown**
+
+1. **Prompt the user for the first number.**
+2. **Prompt the user for the operator.**
+3. **Prompt the user for the second number.**
+4. **Perform the corresponding calculation.**
+5. **Display the result.**
+6. **Handle division by zero.**
+
+```
+print "Enter first number:"
+a = input()
+print "Enter operator (+, -, *, /):"
+op = input()
+print "Enter second number:"
+b = input()
+
+if op == "+" {
+    print a + b
+} elif op == "-" {
+    print a - b
+} elif op == "*" {
+    print a * b
+} elif op == "/" {
+    if b == 0 {
+        error "Cannot divide by zero!"
+    } else {
+        print a / b
+    }
+} else {
+    print "Invalid operator!"
+}
+```
+
+### **Challenge Questions:**
+1. What happens if the user enters a non-numeric input?
+2. How can you modify the program to allow continuous calculations until the user exits?
+
+### **7.2 Project: To-Do List App**
+
+Before jumping into the code, take a moment to plan how you would implement a to-do list application. How should tasks be stored? What features would make it user-friendly?
+
+#### **Step-by-Step Breakdown**
+1. **Create an empty list to store tasks.**
+2. **Create a loop that repeatedly shows a menu of options.**
+3. **Allow the user to add tasks to the list.**
+4. **Allow the user to view all tasks.**
+5. **Provide an option to exit the program.**
+6. **Ensure the user cannot enter invalid choices.**
+
+```
+tasks = []
+
+while true {
+    print "1. Add Task"
+    print "2. View Tasks"
+    print "3. Exit"
+    choice = input()
+
+    if choice == "1" {
+        print "Enter Task:"
+        task = input()
+        tasks[] = task
+    } elif choice == "2" {
+        print "Your Tasks:"
+        for t in tasks {
+            print "- " + t
+        }
+    } elif choice == "3" {
+        break
+    } else {
+        print "Invalid option."
+    }
+}
+```
+
+### **Challenge Questions:**
+1. How could you modify this program to allow users to remove tasks from the list?
+2. What happens if a user enters an empty task? How would you prevent that?
+
+## **8. Answer Key**
+
+This section contains answers to all challenge questions found throughout the book.
+
+### **2.2 Writing Your First Program: Hello, World!**
+1. The `print` function displays text on the screen.
+2. Double quotes indicate that the text inside is a string.
+
+### **3.2 Creating Variables**
+1. An integer is a whole number, while a floating-point number contains decimals.
+2. Yes, variables in Rexel are dynamically typed, meaning their type can change based on assigned values.
+
+### **7.1 A Simple Calculator**
+1. If the user enters non-numeric input, the program will likely crash unless input validation is added.
+2. You could use a `while true` loop to keep asking for calculations until the user chooses to exit.
+
+### **7.2 To-Do List App**
+1. You could add a menu option to remove a task by using `tasks.remove(index)`.
+2. Before adding a task, check if it is empty and prompt the user to enter a valid task.
+
+By incorporating these questions and explanations, this guide ensures that readers truly understand Rexel instead of just copying code.
+
