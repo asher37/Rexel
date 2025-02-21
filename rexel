@@ -1,108 +1,191 @@
--- Rexel Interpreter in Lua with Classes
+-- Rexel Interpreter in Lua (Improved with External Library Support)
 
--- RexelInterpreter Table (acting as a class)
-RexelInterpreter = {}
-RexelInterpreter.__index = RexelInterpreter
+-- Lexer: Tokenize the source code into a list of tokens
+function lexer(source_code)
+    local tokens = {}
+    local i = 1
+    local n = #source_code
 
--- Constructor for RexelInterpreter
-function RexelInterpreter:new()
-    local obj = {
-        variables = {},
-        functions = {},
-        output = {},
-        classes = {}
-    }
-    setmetatable(obj, RexelInterpreter)
-    return obj
+    -- Helper function to skip whitespace
+    local function skip_whitespace()
+        while i <= n and (source_code:sub(i, i):match("%s")) do
+            i = i + 1
+        end
+    end
+
+    -- Helper function to read a string literal
+    local function read_string()
+        i = i + 1 -- Skip the opening quote
+        local start = i
+        while i <= n and source_code:sub(i, i) ~= "\"" do
+            i = i + 1
+        end
+        if i > n then
+            error("Unterminated string literal")
+        end
+        local str = source_code:sub(start, i - 1)
+        i = i + 1 -- Skip the closing quote
+        return str
+    end
+
+    -- Main lexer loop
+    while i <= n do
+        skip_whitespace()
+        if i > n then break end
+
+        local char = source_code:sub(i, i)
+
+        if char == "\"" then
+            -- Handle string literals
+            table.insert(tokens, { type = "STRING", value = read_string() })
+        elseif char:match("[%a_]") then
+            -- Handle identifiers and keywords
+            local start = i
+            while i <= n and source_code:sub(i, i):match("[%a%d_]") do
+                i = i + 1
+            end
+            local identifier = source_code:sub(start, i - 1)
+            table.insert(tokens, { type = "IDENTIFIER", value = identifier })
+        elseif char:match("[%d]") then
+            -- Handle numbers
+            local start = i
+            while i <= n and source_code:sub(i, i):match("[%d]") do
+                i = i + 1
+            end
+            local number = source_code:sub(start, i - 1)
+            table.insert(tokens, { type = "NUMBER", value = tonumber(number) })
+        else
+            -- Handle single-character tokens (e.g., '{', '}', '(', ')', etc.)
+            table.insert(tokens, { type = "SYMBOL", value = char })
+            i = i + 1
+        end
+    end
+
+    return tokens
 end
 
--- Parse the Rexel code
-function RexelInterpreter:parse(code)
-    local statements = {}
-    for line in code:gmatch("[^\r\n]+") do
-        table.insert(statements, line:match("^%s*(.-)%s*$"))
+-- Parser: Convert tokens to an Abstract Syntax Tree (AST)
+function parser(tokens)
+    local ast = {}
+    local i = 1
+    local n = #tokens
+
+    -- Helper function to consume a token
+    local function consume(expected_type, expected_value)
+        if i > n then
+            error("Unexpected end of input")
+        end
+        local token = tokens[i]
+        if token.type ~= expected_type or (expected_value and token.value ~= expected_value) then
+            error("Unexpected token: " .. token.type .. " (" .. tostring(token.value) .. ")")
+        end
+        i = i + 1
+        return token
     end
-    for _, statement in ipairs(statements) do
-        self:execute(statement)
+
+    -- Helper function to parse an expression
+    local function parse_expression()
+        local token = tokens[i]
+        if token.type == "STRING" or token.type == "NUMBER" then
+            i = i + 1
+            return { type = "LITERAL", value = token.value }
+        elseif token.type == "IDENTIFIER" then
+            i = i + 1
+            return { type = "IDENTIFIER", value = token.value }
+        else
+            error("Unexpected token in expression: " .. token.type)
+        end
+    end
+
+    -- Main parser loop
+    while i <= n do
+        local token = tokens[i]
+
+        if token.type == "IDENTIFIER" and token.value == "import" then
+            -- Handle import statement
+            consume("IDENTIFIER", "import")
+            local module = consume("STRING").value
+            local alias = nil
+            if i <= n and tokens[i].type == "IDENTIFIER" and tokens[i].value == "as" then
+                consume("IDENTIFIER", "as")
+                alias = consume("IDENTIFIER").value
+            end
+            table.insert(ast, { type = "IMPORT", module = module, alias = alias })
+        elseif token.type == "IDENTIFIER" and token.value == "tui.window" then
+            -- Handle tui.window function call
+            consume("IDENTIFIER", "tui.window")
+            local window_title = parse_expression()
+            table.insert(ast, { type = "FUNCTION_CALL", func = "window", args = window_title })
+        elseif token.type == "IDENTIFIER" and token.value == "if" then
+            -- Handle if statement
+            consume("IDENTIFIER", "if")
+            local condition = parse_expression()
+            consume("SYMBOL", "{")
+            local body = parse_expression()
+            consume("SYMBOL", "}")
+            table.insert(ast, { type = "IF", condition = condition, body = body })
+        else
+            error("Unexpected token: " .. token.type .. " (" .. tostring(token.value) .. ")")
+        end
+    end
+
+    return ast
+end
+
+-- Evaluator: Execute the AST
+function evaluator(ast)
+    for _, node in ipairs(ast) do
+        if node.type == "IMPORT" then
+            load_library(node.module, node.alias)
+        elseif node.type == "FUNCTION_CALL" then
+            execute_function(node.func, node.args)
+        elseif node.type == "IF" then
+            evaluate_condition(node.condition, node.body)
+        else
+            error("Unknown AST node: " .. node.type)
+        end
     end
 end
 
--- Execute a statement based on its structure
-function RexelInterpreter:execute(statement)
-    if statement:find("=>") then
-        self:handle_function(statement)
-    elseif statement:find("do-this-if") then
-        self:handle_inline_condition(statement)
-    elseif statement:find("|>") then
-        self:handle_iteration(statement)
-    elseif statement:find("class") then
-        self:handle_class(statement)
-    elseif statement:find("new") then
-        self:handle_new_object(statement)
+-- Load external libraries
+function load_library(module, alias)
+    -- Attempt to load the external library
+    local success, lib = pcall(require, module)
+    if not success then
+        error("Failed to load library: " .. module)
+    end
+
+    -- Assign the library to the global namespace with the alias (if provided)
+    if alias then
+        _G[alias] = lib
     else
-        self:handle_assignment(statement)
+        _G[module] = lib
     end
 end
 
--- Handle function definitions
-function RexelInterpreter:handle_function(statement)
-    local func_name, func_body = statement:match("^(%w+)%s*=>%s*(.+)$")
-    self.functions[func_name] = func_body
-end
-
--- Handle inline conditional statements
-function RexelInterpreter:handle_inline_condition(statement)
-    local condition, action = statement:match("^(.-)%s*do%-this%-if%s*(.+)$")
-    if load("return " .. condition)() then
-        table.insert(self.output, action)
-    end
-end
-
--- Handle iteration using the |> operator
-function RexelInterpreter:handle_iteration(statement)
-    local arr_str, action = statement:match("^(.-)%s*|>%s*(.+)$")
-    local arr = load("return " .. arr_str)()
-    for _, item in ipairs(arr) do
-        table.insert(self.output, action .. " " .. tostring(item))
-    end
-end
-
--- Handle class definitions
-function RexelInterpreter:handle_class(statement)
-    local class_name, class_body = statement:match("^class%s+(%w+)%s*{(.*)}$")
-    local class = {}
-    class.__index = class
-
-    -- Parse and define methods within the class
-    for method_name, method_body in class_body:gmatch("(%w+)%s*=>%s*(.+)") do
-        class[method_name] = load("return function(self) return " .. method_body .. " end")()
-    end
-
-    self.classes[class_name] = class
-end
-
--- Handle object creation
-function RexelInterpreter:handle_new_object(statement)
-    local class_name, obj_name = statement:match("^new%s+(%w+)%s+as%s+(%w+)$")
-    local class = self.classes[class_name]
-    if class then
-        local obj = setmetatable({}, class)
-        self.variables[obj_name] = obj
+-- Execute function calls
+function execute_function(func, args)
+    -- Look up the function in the global namespace
+    local func_obj = _G[func]
+    if type(func_obj) == "function" then
+        func_obj(args.value) -- Call the function with the argument
     else
-        error("Class " .. class_name .. " not defined.")
+        error("Unknown function: " .. func)
     end
 end
 
--- Handle variable assignments
-function RexelInterpreter:handle_assignment(statement)
-    for var_name, value in statement:gmatch("([^,=]+)%s*=%s*(.-)%s*") do
-        self.variables[var_name] = load("return " .. value)()
+-- Evaluate conditions in an if statement
+function evaluate_condition(condition, body)
+    if condition.value == "true" then
+        print("Condition met, executing body: " .. body.value)
+    else
+        print("Condition not met.")
     end
 end
 
--- Print output after execution
-function RexelInterpreter:print_output()
-    for _, line in ipairs(self.output) do
-        print(line)
-    end
+-- Main function to run the Rexel code
+function run_rexel_code(source_code)
+    local tokens = lexer(source_code)  -- Tokenize the source code
+    local ast = parser(tokens)         -- Parse the tokens into an AST
+    evaluator(ast)                     -- Execute the AST
 end
