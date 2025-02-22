@@ -1,183 +1,115 @@
 # Rexel Changelog
 
-## [1.4.1] - 2025-02-21
-### Added
-- **Fixed `nil` behavior**: Added explicit return values and improved error handling to avoid returning `nil` without feedback.
-- **Disabled automatic interactive mode**: Rexel will now only enter interactive mode if no arguments are passed (i.e., no script file). Running `rexel test.rx` will now process the script instead of entering interactive mode.
-  
-### Fixed
-- **Error handling improvements**: Enhanced error handling to ensure all commands, functions, and expressions return meaningful values or error messages.
-- **Exit code handling**: Proper exit codes are now returned for commands like `exit` to ensure a cleaner, more informative termination.
+## 1.3.2 - Detailed Error Codes & Improved Debugging
 
-### Changed
-- **Script execution improvements**: If a script is provided as an argument (`rexel test.rx`), Rexel will execute it without entering interactive mode. Error messages are now clearer for script failures.
+Changes:
 
-## **v1.4.0**
-### New Features:
-- **`run` Command**: Added the ability to execute external commands with the `run` keyword (e.g., `run /bin/ls` or `run /path/to/script.sh`).
-- **Error Handling Enhancements**: Improved error messages to include line numbers and positions in the source code for better debugging.
-- **Improved Concurrency**: Enhanced threading support for concurrent task execution with the addition of the `thread` command.
-- **Custom Data Structures**: Introduced HashMap and Set support for better data handling and manipulation.
-- **Enhanced Debugging**: Added the `debug` command for better runtime inspection and tracing.
-- **File I/O Enhancements**: Introduced functions for reading and writing files, as well as appending to files.
+- Introduced unique error codes for all syntax and runtime errors.
+- Syntax errors now specify the exact issue (e.g., **10: Missing Parenthesis**, **11: Unexpected Token**).
+- Runtime errors are categorized (e.g., **20: Division by Zero**, **21: Nil Reference**, **22: Invalid Function Call**).
+- Execution errors for running commands (e.g., **30: Command Not Found**, **31: Permission Denied**).
+- Improved debugging output for error tracing.
 
-### Bug Fixes:
-- Fixed issues related to the parsing of complex expressions.
-- Addressed an issue where certain operators were not properly parsed.
+## 1.3.1 - REPL Fixes & Stability Improvements
 
-### Other Changes:
-- Updated the interpreter to handle a broader range of valid expressions.
-- Improved the REPL interface for better user experience.
-- Refined memory management for better performance.
+### Changes:
 
----
+- Fixed an issue where interactive mode would start even when running a script.
+- Removed unwanted `nil` outputs in REPL.
+- Minor performance improvements to file I/O functions.
 
-## **v1.3.0**
-### New Features:
-- **Basic File I/O**: Introduced `read()`, `write()`, and `append()` functions for file handling.
-- **`run` Command**: A basic implementation to execute external commands within the Rexel environment.
+## 1.3.0 - Major Feature Update
 
-### Bug Fixes:
-- Fixed bug causing incorrect parsing of multi-line string literals.
+### Changes:
 
-### Other Changes:
-- Enhanced the interpreter's error recovery capabilities.
-- Improved internal handling of arrays and other built-in types.
+- Added `run` command to execute external programs.
+- Implemented parallel execution with LuaLanes.
+- Enhanced error recovery and debugging utilities.
+- Improved REPL with better error messages.
+- Added built-in support for hash maps and sets.
 
----
+## 1.2.0 - Improved Interpreter & Performance Enhancements
 
-## **v1.2.0**
-### New Features:
-- **Basic REPL Support**: Added a read-eval-print loop for interactive Rexel scripting.
-- **Error Recovery**: Added basic error handling with recoverable errors.
+### Changes:
 
-### Bug Fixes:
-- Fixed the issue with `if` conditions failing under certain cases.
+- Introduced proper error handling for missing modules.
+- Optimized lexer and parser for faster execution.
+- Improved function calls and variable lookups.
 
-### Other Changes:
-- Enhanced internal memory handling for faster execution.
+  1\.
 
----
+## 1.1.2 - Minor Improvements
 
-## **v1.1.0**
-### New Features:
-- **External Command Execution**: Introduced the ability to run shell commands directly from the Rexel environment.
+### Changes:
 
-### Bug Fixes:
-- Fixed issues with function handling.
+- Optimized memory usage in script execution.
+- Fixed minor bugs in file I/O.
 
-### Other Changes:
-- Improved parsing of multi-line statements.
+##  1.1.1 - Small Bug Fixes
 
----
+### Changes:
 
-## **v1.0.0**
-### Initial Release:
-- Basic interpreter with support for variables, functions, and conditional statements.
-- Basic arithmetic operations, logical operators, and comparison operators.
-- Simple print statement and a basic REPL for executing scripts.
+- Fixed an issue with unclosed strings in scripts.
+- Improved handling of command-line arguments.
 
----
+## 1.0.0 - Initial Stable Release
 
-## **v0.9.0**
-### New Features:
-- **Improved Syntax Handling**: Fixed syntax inconsistencies and added support for more complex expressions.
-  
-### Bug Fixes:
-- Improved error handling for invalid syntax.
+### Changes:
 
-### Other Changes:
-- Improved the evaluator’s ability to handle edge cases.
+- First stable version of Rexel.
+- Supports variable assignments, functions, conditionals, and loops.
+- Includes file I/O and basic error handling.
 
----
+## 0.9.0 - Pre-Release Final Adjustments
 
-## **v0.8.0**
-### New Features:
-- **Array Support**: Introduced arrays with the ability to store multiple values in a single variable.
+### Changes:
 
-### Bug Fixes:
-- Fixed issue with `if` statements not properly evaluating edge cases.
-  
-### Other Changes:
-- Minor optimizations for performance.
+- Improved parser efficiency.
+- Better handling of floating-point numbers.
 
----
+## 0.8.0 - Execution Optimizations
 
-## **v0.7.0**
-### New Features:
-- **Function Support**: Allowed users to define and call custom functions.
+### Changes:
 
-### Bug Fixes:
-- Addressed an issue with variable scoping within functions.
+- Optimized function calls.
+- Improved loop performance.
 
-### Other Changes:
-- Enhanced parser to allow for nested function calls.
+## 0.7.0 - Module System Introduction
 
----
+### Changes:
 
-## **v0.6.0**
-### New Features:
-- **Basic File I/O**: Introduced basic functionality to read and write text files.
+- Implemented `import` for external scripts.
+- Improved syntax consistency.
 
-### Bug Fixes:
-- Fixed issues with multi-line string literals.
-  
-### Other Changes:
-- Optimized memory management for better performance.
+## 0.6.0 - Enhanced Data Handling
 
----
+### Changes:
 
-## **v0.5.0**
-### New Features:
-- **Boolean Support**: Added support for boolean values (`true` and `false`).
-  
-### Bug Fixes:
-- Fixed issues with expression evaluation.
+- Introduced support for arrays and maps.
+- Optimized variable management.
 
-### Other Changes:
-- Improved the handling of operator precedence.
+## 0.5.0 - Core Interpreter Refinements
 
----
+### Changes:
 
-## **v0.4.0**
-### New Features:
-- **Basic Arithmetic Operations**: Enhanced arithmetic capabilities (addition, subtraction, multiplication, division).
+- Improved error messages.
+- Minor syntax changes.
 
-### Bug Fixes:
-- Fixed issues with parsing floating-point numbers.
+## 0.4.0 - Built-in Functions Expansion
 
-### Other Changes:
-- Improved internal handling of string manipulation.
+### Changes:
 
----
+- Added math functions and string utilities.
 
-## **v0.3.0**
-### New Features:
-- **String Support**: Added support for string variables and string concatenation.
+## 0.3.0 - Control Flow Enhancements
 
-### Bug Fixes:
-- Fixed issues with variable assignment.
+### Changes:
 
-### Other Changes:
-- Refined error handling for unrecognized tokens.
+- Introduced `if` statements and loops.
 
----
+## 0.2.0 - Improved Parsing & Evaluation
 
-## **v0.2.0**
-### New Features:
-- **Function Definitions**: Support for defining and calling functions.
-- **Improved Parsing**: More robust parsing for complex expressions and conditions.
+### Changes:
 
-### Bug Fixes:
-- Fixed issue with variable scope and overwriting.
-
-### Other Changes:
-- Optimized the evaluation of simple expressions.
-
----
-
-## **v0.1.0**
-### Initial Release:
-- Basic Rexel interpreter with support for simple arithmetic, variables, and print statements.
-- Support for basic `if` conditions and basic logic operators.
-- Minimal parser and evaluator for handling arithmetic and variables.
+- Better handling of expressions.
+- Added basic arithmetic operations
