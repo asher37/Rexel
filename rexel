@@ -2,6 +2,19 @@
 
 -- Rexel Interpreter 1.4.1
 
+-- version.lua (could be in your repo)
+local version = "1.0.0"
+local commit_hash = "abcdef1234567890"
+
+-- stat.lua (your main logic for stat)
+local args = {...}  -- Capture command-line args
+
+if args[1] == "--version" then
+    print("Rexel Version: " .. version)
+    print("Commit: " .. commit_hash)
+    os.exit(0)  -- Exit after showing version info
+end
+
 -- Import system (for custom modules)
 function import(module_name)
     local path = "/usr/local/share/rexel/" .. module_name .. ".rx"
