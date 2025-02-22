@@ -1,5 +1,17 @@
 # Rexel Changelog
 
+## [1.4.1] - 2025-02-21
+### Added
+- **Fixed `nil` behavior**: Added explicit return values and improved error handling to avoid returning `nil` without feedback.
+- **Disabled automatic interactive mode**: Rexel will now only enter interactive mode if no arguments are passed (i.e., no script file). Running `rexel test.rx` will now process the script instead of entering interactive mode.
+  
+### Fixed
+- **Error handling improvements**: Enhanced error handling to ensure all commands, functions, and expressions return meaningful values or error messages.
+- **Exit code handling**: Proper exit codes are now returned for commands like `exit` to ensure a cleaner, more informative termination.
+
+### Changed
+- **Script execution improvements**: If a script is provided as an argument (`rexel test.rx`), Rexel will execute it without entering interactive mode. Error messages are now clearer for script failures.
+
 ## **v1.4.0**
 ### New Features:
 - **`run` Command**: Added the ability to execute external commands with the `run` keyword (e.g., `run /bin/ls` or `run /path/to/script.sh`).
