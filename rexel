@@ -1,17 +1,14 @@
 #!/bin/lua
 
--- Rexel Interpreter 1.4.1
+-- Rexel Interpreter 1.3.3
 
--- version.lua (could be in your repo)
-local version = "1.0.0"
-local commit_hash = "abcdef1234567890"
+-- version option
+local version = "Rexel Version 1.3.3"
 
--- stat.lua (your main logic for stat)
 local args = {...}  -- Capture command-line args
 
 if args[1] == "--version" then
     print("Rexel Version: " .. version)
-    print("Commit: " .. commit_hash)
     os.exit(0)  -- Exit after showing version info
 end
 
