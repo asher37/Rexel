@@ -1,5 +1,11 @@
 # Rexel Changelog
 
+## 1.3.2 - Version Option
+
+Changes:
+
+- Introduced a --version and -v option for checking version number
+
 ## 1.3.2 - Detailed Error Codes & Improved Debugging
 
 Changes:
