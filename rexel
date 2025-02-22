@@ -1,3 +1,5 @@
+#!/bin/lua
+
 -- Rexel Interpreter 1.4.1
 
 -- Import system (for custom modules)
