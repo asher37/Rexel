@@ -28,6 +28,6 @@ else
 fi
 
 # Move the rexel file to /bin
-sudo mv rexel /bin/rexel
+sudo cp rexel /bin/rexel
 
 echo "Rexel setup is complete."
