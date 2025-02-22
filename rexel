@@ -1,191 +1,130 @@
--- Rexel Interpreter in Lua (Improved with External Library Support)
+-- Rexel 1.4.0 Interpreter (Full Version)
 
--- Lexer: Tokenize the source code into a list of tokens
-function lexer(source_code)
-    local tokens = {}
-    local i = 1
-    local n = #source_code
-
-    -- Helper function to skip whitespace
-    local function skip_whitespace()
-        while i <= n and (source_code:sub(i, i):match("%s")) do
-            i = i + 1
-        end
+-- Import system (for custom modules)
+function import(module_name)
+    local path = "/usr/local/share/rexel/libs/" .. module_name .. ".rx"
+    local file = io.open(path, "r")
+    if not file then
+        error("Module not found: " .. module_name)
     end
-
-    -- Helper function to read a string literal
-    local function read_string()
-        i = i + 1 -- Skip the opening quote
-        local start = i
-        while i <= n and source_code:sub(i, i) ~= "\"" do
-            i = i + 1
-        end
-        if i > n then
-            error("Unterminated string literal")
-        end
-        local str = source_code:sub(start, i - 1)
-        i = i + 1 -- Skip the closing quote
-        return str
-    end
-
-    -- Main lexer loop
-    while i <= n do
-        skip_whitespace()
-        if i > n then break end
-
-        local char = source_code:sub(i, i)
-
-        if char == "\"" then
-            -- Handle string literals
-            table.insert(tokens, { type = "STRING", value = read_string() })
-        elseif char:match("[%a_]") then
-            -- Handle identifiers and keywords
-            local start = i
-            while i <= n and source_code:sub(i, i):match("[%a%d_]") do
-                i = i + 1
-            end
-            local identifier = source_code:sub(start, i - 1)
-            table.insert(tokens, { type = "IDENTIFIER", value = identifier })
-        elseif char:match("[%d]") then
-            -- Handle numbers
-            local start = i
-            while i <= n and source_code:sub(i, i):match("[%d]") do
-                i = i + 1
-            end
-            local number = source_code:sub(start, i - 1)
-            table.insert(tokens, { type = "NUMBER", value = tonumber(number) })
-        else
-            -- Handle single-character tokens (e.g., '{', '}', '(', ')', etc.)
-            table.insert(tokens, { type = "SYMBOL", value = char })
-            i = i + 1
-        end
-    end
-
-    return tokens
+    local code = file:read("*a")
+    file:close()
+    load(code)()
 end
 
--- Parser: Convert tokens to an Abstract Syntax Tree (AST)
-function parser(tokens)
-    local ast = {}
-    local i = 1
-    local n = #tokens
-
-    -- Helper function to consume a token
-    local function consume(expected_type, expected_value)
-        if i > n then
-            error("Unexpected end of input")
-        end
-        local token = tokens[i]
-        if token.type ~= expected_type or (expected_value and token.value ~= expected_value) then
-            error("Unexpected token: " .. token.type .. " (" .. tostring(token.value) .. ")")
-        end
-        i = i + 1
-        return token
+-- File I/O Functions
+function readFile(filename)
+    local file = io.open(filename, "r")
+    if not file then
+        error("Unable to read file: " .. filename)
     end
-
-    -- Helper function to parse an expression
-    local function parse_expression()
-        local token = tokens[i]
-        if token.type == "STRING" or token.type == "NUMBER" then
-            i = i + 1
-            return { type = "LITERAL", value = token.value }
-        elseif token.type == "IDENTIFIER" then
-            i = i + 1
-            return { type = "IDENTIFIER", value = token.value }
-        else
-            error("Unexpected token in expression: " .. token.type)
-        end
-    end
-
-    -- Main parser loop
-    while i <= n do
-        local token = tokens[i]
-
-        if token.type == "IDENTIFIER" and token.value == "import" then
-            -- Handle import statement
-            consume("IDENTIFIER", "import")
-            local module = consume("STRING").value
-            local alias = nil
-            if i <= n and tokens[i].type == "IDENTIFIER" and tokens[i].value == "as" then
-                consume("IDENTIFIER", "as")
-                alias = consume("IDENTIFIER").value
-            end
-            table.insert(ast, { type = "IMPORT", module = module, alias = alias })
-        elseif token.type == "IDENTIFIER" and token.value == "tui.window" then
-            -- Handle tui.window function call
-            consume("IDENTIFIER", "tui.window")
-            local window_title = parse_expression()
-            table.insert(ast, { type = "FUNCTION_CALL", func = "window", args = window_title })
-        elseif token.type == "IDENTIFIER" and token.value == "if" then
-            -- Handle if statement
-            consume("IDENTIFIER", "if")
-            local condition = parse_expression()
-            consume("SYMBOL", "{")
-            local body = parse_expression()
-            consume("SYMBOL", "}")
-            table.insert(ast, { type = "IF", condition = condition, body = body })
-        else
-            error("Unexpected token: " .. token.type .. " (" .. tostring(token.value) .. ")")
-        end
-    end
-
-    return ast
+    local content = file:read("*a")
+    file:close()
+    return content
 end
 
--- Evaluator: Execute the AST
-function evaluator(ast)
-    for _, node in ipairs(ast) do
-        if node.type == "IMPORT" then
-            load_library(node.module, node.alias)
-        elseif node.type == "FUNCTION_CALL" then
-            execute_function(node.func, node.args)
-        elseif node.type == "IF" then
-            evaluate_condition(node.condition, node.body)
-        else
-            error("Unknown AST node: " .. node.type)
-        end
+function writeFile(filename, content)
+    local file = io.open(filename, "w")
+    if not file then
+        error("Unable to write to file: " .. filename)
+    end
+    file:write(content)
+    file:close()
+end
+
+-- Threading support using LuaLanes (install via luarocks)
+local lanes = require "lanes".configure()
+
+function run_parallel(funcs)
+    local threads = {}
+    for _, func in ipairs(funcs) do
+        table.insert(threads, lanes.gen("*", func))
+    end
+    -- Wait for threads to finish
+    for _, thread in ipairs(threads) do
+        thread()
     end
 end
 
--- Load external libraries
-function load_library(module, alias)
-    -- Attempt to load the external library
-    local success, lib = pcall(require, module)
+-- Enhanced error recovery
+function try(func)
+    local success, result = pcall(func)
     if not success then
-        error("Failed to load library: " .. module)
+        print("Error occurred: " .. result)
+        -- Fallback behavior
+        return nil
     end
+    return result
+end
 
-    -- Assign the library to the global namespace with the alias (if provided)
-    if alias then
-        _G[alias] = lib
-    else
-        _G[module] = lib
+-- Run external commands (run command)
+function run(command, ...)
+    local args = {...}
+    local cmd = command .. " " .. table.concat(args, " ")
+    os.execute(cmd)
+end
+
+-- Debugging utility
+function debug_variable(var)
+    print("Variable Value: " .. tostring(var))
+end
+
+-- Basic Hash Map Implementation
+local function create_map()
+    local map = {}
+    function map:set(key, value)
+        self[key] = value
+    end
+    function map:get(key)
+        return self[key]
+    end
+    return map
+end
+
+-- Set Implementation
+local function create_set()
+    local set = {}
+    function set:add(value)
+        self[value] = true
+    end
+    function set:contains(value)
+        return self[value] ~= nil
+    end
+    return set
+end
+
+-- Example usage of file I/O, threading, and run command
+writeFile("output.txt", "Hello from Rexel!")
+local content = readFile("output.txt")
+print(content)
+
+run("ls", "-l", "/home")
+
+run_parallel({
+    function() print("Task 1") end,
+    function() print("Task 2") end,
+    function() print("Task 3") end,
+})
+
+-- REPL Function
+function repl()
+    while true do
+        io.write("Rexel> ")
+        local input = io.read()
+        if input == "exit" then break end
+        local func, err = load(input)
+        if not func then
+            print("Error: " .. err)
+        else
+            local success, result = pcall(func)
+            if success then
+                print(result)
+            else
+                print("Runtime Error: " .. result)
+            end
+        end
     end
 end
 
--- Execute function calls
-function execute_function(func, args)
-    -- Look up the function in the global namespace
-    local func_obj = _G[func]
-    if type(func_obj) == "function" then
-        func_obj(args.value) -- Call the function with the argument
-    else
-        error("Unknown function: " .. func)
-    end
-end
-
--- Evaluate conditions in an if statement
-function evaluate_condition(condition, body)
-    if condition.value == "true" then
-        print("Condition met, executing body: " .. body.value)
-    else
-        print("Condition not met.")
-    end
-end
-
--- Main function to run the Rexel code
-function run_rexel_code(source_code)
-    local tokens = lexer(source_code)  -- Tokenize the source code
-    local ast = parser(tokens)         -- Parse the tokens into an AST
-    evaluator(ast)                     -- Execute the AST
-end
+-- Start the REPL
+repl()
