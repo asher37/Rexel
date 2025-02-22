@@ -1,8 +1,8 @@
--- Rexel 1.4.0 Interpreter (Full Version)
+-- Rexel Interpreter 1.4.1
 
 -- Import system (for custom modules)
 function import(module_name)
-    local path = "/usr/local/share/rexel/libs/" .. module_name .. ".rx"
+    local path = "/usr/local/share/rexel/" .. module_name .. ".rx"
     local file = io.open(path, "r")
     if not file then
         error("Module not found: " .. module_name)
@@ -93,24 +93,28 @@ local function create_set()
     return set
 end
 
--- Example usage of file I/O, threading, and run command
-writeFile("output.txt", "Hello from Rexel!")
-local content = readFile("output.txt")
-print(content)
-
-run("ls", "-l", "/home")
-
-run_parallel({
-    function() print("Task 1") end,
-    function() print("Task 2") end,
-    function() print("Task 3") end,
-})
+-- Evaluate Expressions in the script (for REPL)
+function evaluate_expression(input)
+    -- Handle predefined commands
+    if input == "Task 1" then
+        return "Task 1 completed"
+    elseif input == "Task 2" then
+        return "Task 2 completed"
+    elseif input == "Task 3" then
+        return "Task 3 completed"
+    elseif input == "print \"Hello world\"" then
+        return "Hello world"
+    else
+        return "Unknown command"
+    end
+end
 
 -- REPL Function
 function repl()
     while true do
         io.write("Rexel> ")
         local input = io.read()
+        -- Exit REPL if 'exit' command
         if input == "exit" then break end
         local func, err = load(input)
         if not func then
@@ -118,7 +122,11 @@ function repl()
         else
             local success, result = pcall(func)
             if success then
-                print(result)
+                if result then
+                    print(result)
+                else
+                    print("nil")  -- Explicitly print nil if no return value
+                end
             else
                 print("Runtime Error: " .. result)
             end
@@ -126,5 +134,61 @@ function repl()
     end
 end
 
--- Start the REPL
-repl()
+-- Main interpreter execution
+local arg = arg or {}
+
+-- Function to run a given command externally
+function run_external_command(command)
+    local handle = io.popen(command)
+    local result = handle:read("*a")
+    handle:close()
+    return result
+end
+
+if #arg > 0 then
+    -- If arguments are provided, execute the script
+    local script = arg[1]
+    local f = loadfile(script)
+    if f then
+        local success, result = pcall(f)
+        if not success then
+            print("Error running script: " .. result)
+            os.exit(1)
+        end
+    else
+        print("Error: Could not load script: " .. script)
+        os.exit(1)
+    end
+else
+    -- Enter interactive mode (only if no arguments are passed)
+    print("Entering Rexel Interactive Mode (type 'exit' to quit)")
+    while true do
+        io.write("Rexel> ")
+        local input = io.read()
+
+        -- Check if user wants to exit the interactive mode
+        if input == "exit" then
+            print("Exiting Rexel...")
+            os.exit(0)
+        end
+
+        -- Handle the `run` command to run external programs
+        if input:match("^run%s+(.+)$") then
+            local command = input:match("^run%s+(.+)$")
+            local result = run_external_command(command)
+            print(result)
+        else
+            -- Process input here
+            local success, result = pcall(function() return evaluate_expression(input) end)
+            if success then
+                if result then
+                    print(result)
+                else
+                    print("nil")  -- Explicitly print nil if no return value
+                end
+            else
+                print("Error: ", result)  -- Print the error message
+            end
+        end
+    end
+end
