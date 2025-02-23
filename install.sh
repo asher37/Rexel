@@ -27,7 +27,8 @@ else
     echo "Lua is already installed."
 fi
 
-# Move the rexel file to /bin
-sudo cp rexel /bin/rexel
-
+# Make rexel executable
+chmod +x rexel
+# Install rexel
+sudo cp rexel /bin
 echo "Rexel setup is complete."
