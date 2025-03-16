@@ -1,4 +1,4 @@
--- A simple example using `input` and `print`
+** A simple example using `input` and `print`
 print "Enter your name: "
 local name = input()
 print "Hello, " .. name .. "!"
