@@ -1,6 +1,6 @@
 # Rexel Changelog
 
-## 1.3.2 - Version Option
+## 1.3.3 - Version Option
 
 Changes:
 
