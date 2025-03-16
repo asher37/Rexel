@@ -1,5 +1,60 @@
 # Rexel Changelog
 
+# Changelog - **Rexel Interpreter 1.4.0**
+
+**Version**: 1.4.0  
+**Release Date**: 2025-03-16
+
+## New Features:
+1. **Module Loading and Error Handling**:  
+   - Implemented a new module loading system that ensures modules are only loaded once to prevent redundancy.  
+   - If a module is missing, an informative error is raised, specifying the missing module.
+   - Added an error code for better clarity and tracking of errors.
+  
+2. **File I/O Functions**:  
+   - Added `readFile` and `writeFile` functions for reading from and writing to files, with error handling for file operations.
+
+3. **Threading Support**:  
+   - Integrated threading support using **LuaLanes**, allowing functions to run in parallel threads.  
+   - Includes helper functions for thread management like `create_lock()` and `create_queue()`.
+
+4. **Enhanced Error Recovery**:  
+   - Introduced the `try()` function for handling errors gracefully within Rexel scripts.
+   - Allows users to specify a custom error handler using `define_error_handler()`.
+
+5. **Basic Debugging**:  
+   - Added `debug_variable()` for inspecting variable values in the REPL.
+
+6. **Advanced Data Structures**:  
+   - Implemented **Linked Lists**, **Hash Maps**, and **Sets** for more advanced data management.
+   - Created utility functions to create, update, and access data within these structures.
+
+7. **Interactive REPL Enhancements**:  
+   - Added command history navigation (`up` and `down` arrows) for a smoother interactive experience.
+   - Added **auto-completion** for common commands (`run`, `exit`, `help`).
+   - Introduced `show_help()` for displaying available commands in the REPL.
+  
+8. **Custom Command Registration**:  
+   - Users can now register custom commands in the REPL using `register_command()`, extending the Rexel interpreter’s capabilities.
+
+9. **External Command Execution**:  
+   - Introduced the `run_external_command()` function, which allows the execution of system commands directly from the REPL.
+
+10. **Performance Profiling**:  
+    - Introduced `profile()` for measuring the execution time of functions and improving performance optimization.
+
+11. **Command Handling Enhancements**:  
+    - Custom commands are now supported and can be registered, extending the flexibility of the interpreter.
+
+## Bug Fixes:
+- Fixed minor issues related to file handling and threading to improve stability.
+- Improved error reporting in the REPL when a function fails during execution.
+
+## Miscellaneous:
+- Updated documentation for all new features.
+- Improved code readability and organization.
+- Added more comprehensive error messages for easier debugging and troubleshooting.
+
 ## 1.3.3 - Version Option
 
 Changes:
