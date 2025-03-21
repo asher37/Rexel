@@ -1,4 +1,19 @@
 # Rexel Changelog
+# Changelog - **Rexel Interpreter 1.4.1**
+**Version**: 1.4.1
+**Release Date**: 2025-03-21
+## New Features
+1. **Input Keyword**
+   - Implemented a command for taking input in scripts
+   - Example: Input "What is your name: " name
+   - Print "Hello" .. name
+2. **Functions**
+   - Subrutine Feature to create functions
+   - Example: sub-start greet
+   - print "Hello" .. name
+   - sub-end
+   - name = "Asher"
+   - greet
 
 # Changelog - **Rexel Interpreter 1.4.0**
 
