@@ -1,9 +1,9 @@
 #!/bin/lua
 
--- Rexel Interpreter 1.4.0
+-- Rexel Interpreter 1.4.1
 
 -- version option
-local version = "Rexel Version 1.4.0"
+local version = "Rexel Version 1.4.1"
 
 local args = {...}  -- Capture command-line args
 
@@ -167,11 +167,16 @@ end
 
 -- Evaluate Expressions in the script (for REPL)
 local function evaluate_expression(input)
+    -- Parse functions with no parentheses (no brackets)
+    input = input:gsub("([%a_][%w_]*)%s*(%b )", "%1()")  -- This will add () after function names like print
+
     local env = setmetatable({}, {__index = _G})
     local func, err = load("return " .. input, "expression", "t", env)
+    
     if not func then
         func, err = load(input, "expression", "t", env)
     end
+    
     if func then
         local success, result = pcall(func)
         if success then
@@ -184,89 +189,32 @@ local function evaluate_expression(input)
     end
 end
 
-local function profile(func)
-    local start_time = os.clock()
-    local result = func()
-    local end_time = os.clock()
-    print("Execution time: " .. (end_time - start_time) .. " seconds")
-    return result
-end
+-- Subroutine handling
+local subroutines = {}
 
--- Extending the REPL with Custom Commands
-local custom_commands = {}
-
-function register_command(name, func)
-    custom_commands[name] = func
-end
-
--- REPL Function with Enhancements
-local history = {}
-local history_index = 0
-
-local function add_to_history(cmd)
-    table.insert(history, cmd)
-    history_index = #history + 1
-end
-
-local function get_from_history(direction)
-    if direction == "up" then
-        history_index = math.max(1, history_index - 1)
-    elseif direction == "down" then
-        history_index = math.min(#history + 1, history_index + 1)
-    end
-    return history[history_index] or ""
-end
-
-local function show_help()
-    print("Available commands:")
-    print(" - run <command> : Run an external command")
-    print(" - exit : Exit the REPL")
-    print(" - help : Show this help message")
-    -- Add more commands as needed
-end
-
-local function autocomplete(input)
-    -- Implement simple command autocompletion
-    local commands = {"run", "exit", "help"}
-    for _, cmd in ipairs(commands) do
-        if cmd:sub(1, #input) == input then
-            return cmd
-        end
-    end
-    return input
-end
-
-function repl()
-    while true do
-        io.write("Rexel> ")
-        local input = io.read()
-        
-        if input == "exit" then break end
-        if input == "help" then show_help() end
-
-        input = autocomplete(input)
-        add_to_history(input)
-
-        if custom_commands[input] then
-            custom_commands[input]()
+function sub_start(name)
+    local current_func = subroutines[name] or {}
+    subroutines[name] = current_func
+    return function(...)
+        local func = current_func
+        if func then
+            return func(...)
         else
-            local func, err = load(input)
-            if not func then
-                print("Error: " .. err)
-            else
-                local success, result = pcall(func)
-                if success then
-                    if result then
-                        print(result)
-                    else
-                        print("nil")
-                    end
-                else
-                    print("Runtime Error: " .. result)
-                end
-            end
+            return "Error: Subroutine not defined."
         end
     end
+end
+
+-- Example of subroutine call (No brackets)
+function greet()
+    print "Hello, World!"
+end
+
+-- Input function (No brackets)
+function input(prompt, var_name)
+    io.write(prompt)
+    local user_input = io.read()
+    _G[var_name] = user_input
 end
 
 -- Main interpreter execution
@@ -299,22 +247,22 @@ else
     print("Entering Rexel Interactive Mode (type 'exit' to quit)")
     while true do
         io.write("Rexel> ")
-        local input = io.read()
+        local input_str = io.read()
 
         -- Check if user wants to exit the interactive mode
-        if input == "exit" then
+        if input_str == "exit" then
             print("Exiting Rexel...")
             os.exit(0)
         end
 
         -- Handle the `run` command to run external programs
-        if input:match("^run%s+(.+)$") then
-            local command = input:match("^run%s+(.+)$")
+        if input_str:match("^run%s+(.+)$") then
+            local command = input_str:match("^run%s+(.+)$")
             local result = run_external_command(command)
             print(result)
         else
             -- Process input here
-            local success, result = pcall(function() return evaluate_expression(input) end)
+            local success, result = pcall(function() return evaluate_expression(input_str) end)
             if success then
                 if result then
                     print(result)
